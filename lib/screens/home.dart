@@ -6,6 +6,10 @@ import 'package:lab2/screens/mealDetails.dart';
 import 'package:lab2/services/api_service.dart';
 import 'package:lab2/services/meal_service.dart';
 import 'package:lab2/widgets/category_grid.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+final FlutterLocalNotificationsPlugin localNotifs = FlutterLocalNotificationsPlugin();
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -30,12 +34,25 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _loadCategories();
     _loadRandomMeal();
+    _requestNotificationPermission();
+    _initDailyNotification();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Categories")),
+      appBar: AppBar(
+        title: const Text("Categories"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            tooltip: "Test Notification",
+            onPressed: () async {
+              await _showTestNotification();
+            },
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _category.isEmpty
@@ -48,7 +65,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => MealDetailsScreen(mealId: _randomMeal!.idMeal),
+                    builder: (_) =>
+                        MealDetailsScreen(mealId: _randomMeal!.idMeal),
                   ),
                 );
               },
@@ -129,5 +147,62 @@ class _MyHomePageState extends State<MyHomePage> {
             .toList();
       }
     });
+  }
+
+  // 🔔 Notification setup
+  Future<void> _requestNotificationPermission() async {
+    var status = await Permission.notification.status;
+    if (!status.isGranted) {
+      status = await Permission.notification.request();
+    }
+    if (status.isGranted) {
+      debugPrint("Notification permission granted");
+    } else {
+      debugPrint("Notification permission denied");
+    }
+  }
+
+  Future<void> _initDailyNotification() async {
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initSettings = InitializationSettings(android: androidInit);
+    await localNotifs.initialize(initSettings);
+
+    _scheduleDailyRecipeReminder();
+  }
+
+  Future<void> _scheduleDailyRecipeReminder() async {
+    const androidDetails = AndroidNotificationDetails(
+      'daily_channel',
+      'Daily Notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const details = NotificationDetails(android: androidDetails);
+
+    await localNotifs.periodicallyShow(
+      100,
+      'Recipe Reminder',
+      'See today’s random recipe!',
+      RepeatInterval.daily,
+      details,
+      androidAllowWhileIdle: true,
+    );
+  }
+
+  Future<void> _showTestNotification() async {
+    const androidDetails = AndroidNotificationDetails(
+      'test_channel',
+      'Test Notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const details = NotificationDetails(android: androidDetails);
+
+    await localNotifs.show(
+      0,
+      'Test Notification',
+      'This is a test notification!',
+      details,
+    );
   }
 }

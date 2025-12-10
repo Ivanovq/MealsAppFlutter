@@ -3,7 +3,15 @@ import 'package:lab2/models/meal.dart';
 
 class MealCard extends StatelessWidget {
   final MealSummary meal;
-  const MealCard({super.key, required this.meal});
+  final bool isFavorite;
+  final VoidCallback onFavoriteToggle;
+
+  const MealCard({
+    super.key,
+    required this.meal,
+    this.isFavorite = false,
+    required this.onFavoriteToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,16 +38,29 @@ class MealCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                meal.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      meal.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: Colors.red,
+                    ),
+                    onPressed: onFavoriteToggle,
+                  ),
+                ],
               ),
             ),
           ],

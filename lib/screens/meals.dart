@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lab2/models/meal.dart';
+import 'package:lab2/screens/favorites.dart';
 import 'package:lab2/services/api_service.dart';
-import 'package:lab2/services/meal_service.dart';
 import 'package:lab2/widgets/meal_grid.dart';
+
+import '../services/meal_service.dart';
 
 class MealsScreen extends StatefulWidget {
   final String categoryName;
@@ -19,6 +21,7 @@ class _MealsScreenState extends State<MealsScreen> {
 
   List<MealSummary> _meals = [];
   List<MealSummary> _filteredMeals = [];
+  List<MealSummary> _favoriteMeals = [];
 
   @override
   void initState() {
@@ -29,7 +32,25 @@ class _MealsScreenState extends State<MealsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.categoryName)),
+      appBar: AppBar(
+        title: Text(widget.categoryName),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FavoritesPage(
+                    favorites: _favoriteMeals,
+                    onFavoriteToggle: _toggleFavorite,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _meals.isEmpty
@@ -52,7 +73,11 @@ class _MealsScreenState extends State<MealsScreen> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: MealGrid(meals: _filteredMeals),
+              child: MealGrid(
+                meals: _filteredMeals,
+                favorites: _favoriteMeals,
+                onFavoriteToggle: _toggleFavorite,
+              ),
             ),
           ),
         ],
@@ -66,6 +91,16 @@ class _MealsScreenState extends State<MealsScreen> {
       _meals = mealList;
       _filteredMeals = mealList;
       _isLoading = false;
+    });
+  }
+
+  void _toggleFavorite(MealSummary meal) {
+    setState(() {
+      if (_favoriteMeals.contains(meal)) {
+        _favoriteMeals.remove(meal);
+      } else {
+        _favoriteMeals.add(meal);
+      }
     });
   }
 
